@@ -1,4 +1,4 @@
-import type { RangeValue, PickerMode } from '../interface';
+import type { RangeValue, PickerMode, PresetDate } from '../interface';
 import type { GenerateConfig } from '../generate';
 import { getValue, updateValues } from '../utils/miscUtil';
 import { getClosingViewDate, isSameYear, isSameMonth, isSameDecade } from '../utils/dateUtil';
@@ -44,22 +44,22 @@ function getRangeViewDate<DateType>(
   const endDate = getValue(values, 1);
 
   if (index === 0) {
-    return startDate;
+    return startDate as DateType;
   }
 
   if (startDate && endDate) {
     const distance = getStartEndDistance(startDate, endDate, picker, generateConfig);
     switch (distance) {
       case 'same':
-        return startDate;
+        return startDate as DateType;
       case 'closing':
-        return startDate;
+        return startDate as DateType;
       default:
-        return getClosingViewDate(endDate, picker, generateConfig, -1);
+        return getClosingViewDate(endDate as DateType, picker, generateConfig, -1);
     }
   }
 
-  return startDate;
+  return startDate as DateType;
 }
 
 export default function useRangeViewDates<DateType>({
@@ -73,9 +73,10 @@ export default function useRangeViewDates<DateType>({
   defaultDates: RangeValue<DateType> | undefined;
   generateConfig: Ref<GenerateConfig<DateType>>;
 }): [Ref<DateType>, Ref<DateType>, (viewDate: DateType | null, index: 0 | 1) => void] {
-  const defaultViewDates = ref<[DateType | null, DateType | null]>([
-    getValue(defaultDates, 0),
-    getValue(defaultDates, 1),
+  const defaultViewDates = ref<RangeValue<DateType>>([
+    getValue(defaultDates, 0) as DateType,
+    getValue(defaultDates, 1) as DateType,
+    getValue(defaultDates, 2) as PresetDate<RangeValue<DateType>>,
   ]);
   const viewDates = ref<RangeValue<DateType>>(null);
   const startDate = computed(() => getValue(values.value, 0));
@@ -88,10 +89,10 @@ export default function useRangeViewDates<DateType>({
     }
 
     return (
-      (getValue(viewDates.value, index) as any) ||
+      (getValue(viewDates.value as RangeValue<DateType>, index) as DateType) ||
       getRangeViewDate(values.value, index, picker.value, generateConfig.value) ||
-      startDate.value ||
-      endDate.value ||
+      (startDate.value as DateType) ||
+      (endDate.value as DateType) ||
       generateConfig.value.getNow()
     );
   };
@@ -109,12 +110,16 @@ export default function useRangeViewDates<DateType>({
       let newViewDates = updateValues(viewDates.value, viewDate as any, index);
       // Set view date will clean up default one
       // Should always be an array
-      defaultViewDates.value = updateValues(defaultViewDates.value, null, index) || [null, null];
+      defaultViewDates.value = updateValues(defaultViewDates.value, null, index) || [
+        null,
+        null,
+        null,
+      ];
 
       // Reset another one when not have value
       const anotherIndex = (index + 1) % 2;
       if (!getValue(values.value, anotherIndex)) {
-        newViewDates = updateValues(newViewDates, viewDate, anotherIndex);
+        newViewDates = updateValues(newViewDates, viewDate as any, anotherIndex);
       }
 
       viewDates.value = newViewDates;

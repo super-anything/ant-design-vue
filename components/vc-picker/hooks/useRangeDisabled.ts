@@ -52,8 +52,8 @@ export default function useRangeDisabled<DateType>(
     // Disabled range
     if (disabled[1] && endDate) {
       return (
-        !isSameDate(generateConfig.value, date, endDate.value) &&
-        generateConfig.value.isAfter(date, endDate.value)
+        !isSameDate(generateConfig.value, date, endDate.value as DateType) &&
+        generateConfig.value.isAfter(date, endDate.value as DateType)
       );
     }
 
@@ -61,15 +61,15 @@ export default function useRangeDisabled<DateType>(
     if (openRecordsRef.value[1] && endDate.value) {
       switch (picker.value) {
         case 'quarter':
-          return quarterNumber(date) > quarterNumber(endDate.value);
+          return quarterNumber(date) > quarterNumber(endDate.value as DateType);
         case 'month':
-          return monthNumber(date) > monthNumber(endDate.value);
+          return monthNumber(date) > monthNumber(endDate.value as DateType);
         case 'week':
-          return weekFirstDate(date) > weekFirstDate(endDate.value);
+          return weekFirstDate(date) > weekFirstDate(endDate.value as DateType);
         default:
           return (
-            !isSameDate(generateConfig.value, date, endDate.value) &&
-            generateConfig.value.isAfter(date, endDate.value)
+            !isSameDate(generateConfig.value, date, endDate.value as DateType) &&
+            generateConfig.value.isAfter(date, endDate.value as DateType)
           );
       }
     }
@@ -85,8 +85,8 @@ export default function useRangeDisabled<DateType>(
     // Disabled range
     if (disabled[0] && startDate) {
       return (
-        !isSameDate(generateConfig.value, date, endDate.value) &&
-        generateConfig.value.isAfter(startDate.value, date)
+        !isSameDate(generateConfig.value, date, endDate.value as DateType) &&
+        generateConfig.value.isAfter(startDate.value as DateType, date)
       );
     }
 
@@ -94,15 +94,15 @@ export default function useRangeDisabled<DateType>(
     if (openRecordsRef.value[0] && startDate.value) {
       switch (picker.value) {
         case 'quarter':
-          return quarterNumber(date) < quarterNumber(startDate.value);
+          return quarterNumber(date) < quarterNumber(startDate.value as DateType);
         case 'month':
-          return monthNumber(date) < monthNumber(startDate.value);
+          return monthNumber(date) < monthNumber(startDate.value as DateType);
         case 'week':
-          return weekFirstDate(date) < weekFirstDate(startDate.value);
+          return weekFirstDate(date) < weekFirstDate(startDate.value as DateType);
         default:
           return (
-            !isSameDate(generateConfig.value, date, startDate.value) &&
-            generateConfig.value.isAfter(startDate.value, date)
+            !isSameDate(generateConfig.value, date, startDate.value as DateType) &&
+            generateConfig.value.isAfter(startDate.value as DateType, date)
           );
       }
     }

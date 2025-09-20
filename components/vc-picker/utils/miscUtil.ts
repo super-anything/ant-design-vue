@@ -1,3 +1,5 @@
+import type { PresetDate, RangeValue } from '../interface';
+
 export function leftPad(str: string | number, length: number, fill = '0') {
   let current = String(str);
   while (current.length < length) {
@@ -31,21 +33,24 @@ export default function getDataOrAriaProps(props: any) {
   return retProps;
 }
 
-export function getValue<T>(values: null | undefined | (T | null)[], index: number): T | null {
+export function getValue<T>(
+  values: RangeValue<T>,
+  index: number,
+): T | PresetDate<RangeValue<T>> | null {
   return values ? values[index] : null;
 }
 
 type UpdateValue<T> = (prev: T) => T;
 
-export function updateValues<T, R = [T | null, T | null] | null>(
-  values: [T | null, T | null] | null,
+export function updateValues<T, R extends RangeValue<T> | null>(
+  values: R,
   value: T | UpdateValue<T>,
   index: number,
 ): R {
-  const newValues: [T | null, T | null] = [getValue(values, 0), getValue(values, 1)];
+  const newValues = [getValue(values, 0), getValue(values, 1), getValue(values, 2)];
 
   newValues[index] =
-    typeof value === 'function' ? (value as UpdateValue<T | null>)(newValues[index]) : value;
+    typeof value === 'function' ? (value as UpdateValue<T | null>)(newValues[index] as T) : value;
 
   if (!newValues[0] && !newValues[1]) {
     return null as unknown as R;

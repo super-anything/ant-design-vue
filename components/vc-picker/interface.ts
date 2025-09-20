@@ -94,7 +94,14 @@ export type DisabledTime<DateType> = (date: DateType | null) => DisabledTimes;
 export type OnPanelChange<DateType> = (value: DateType, mode: PanelMode) => void;
 
 export type EventValue<DateType> = DateType | null;
-export type RangeValue<DateType> = [EventValue<DateType>, EventValue<DateType>] | null;
+export type RangeValue<DateType> =
+  | [EventValue<DateType>, EventValue<DateType>]
+  | [
+      EventValue<DateType>,
+      EventValue<DateType>,
+      PresetDate<RangeValue<DateType>> | null | undefined,
+    ]
+  | null;
 
 export type Components = {
   button?: any;

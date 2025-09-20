@@ -53,7 +53,7 @@ function reorderValues<DateType>(
   generateConfig: GenerateConfig<DateType>,
 ): RangeValue<DateType> {
   if (values && values[0] && values[1] && generateConfig.isAfter(values[0], values[1])) {
-    return [values[1], values[0]];
+    return [values[1], values[0], values[2]];
   }
 
   return values;
@@ -96,7 +96,7 @@ export type RangePickerSharedProps<DateType> = {
   id?: string;
   value?: RangeValue<DateType>;
   defaultValue?: RangeValue<DateType>;
-  defaultPickerValue?: [DateType, DateType];
+  defaultPickerValue?: RangeValue<DateType>;
   placeholder?: [string, string];
   disabled?: boolean | [boolean, boolean];
   disabledTime?: (date: EventValue<DateType>, type: RangeType) => DisabledTimes;
@@ -335,9 +335,17 @@ function RangerPicker<DateType>() {
 
               // 检查preset.value是否是函数，如果是则执行函数获取当前值
               let startValue =
-                typeof presetValues[0] === 'function' ? presetValues[0]() : presetValues[0];
+                typeof presetValues[0] === 'function'
+                  ? presetValues[0]()
+                  : typeof presetValues[0] === 'string'
+                  ? props.generateConfig.toDate(presetValues[0], 'YYYY-MM-DDTHH:mm:ss.SSSZ')
+                  : presetValues[0];
               let endValue =
-                typeof presetValues[1] === 'function' ? presetValues[1]() : presetValues[1];
+                typeof presetValues[1] === 'function'
+                  ? presetValues[1]()
+                  : typeof presetValues[1] === 'string'
+                  ? props.generateConfig.toDate(presetValues[1], 'YYYY-MM-DDTHH:mm:ss.SSSZ')
+                  : presetValues[1];
 
               // 判断props.isWholeDay是否为true，如果为false，则使用当前时间的时分秒
               if (!props.isWholeDay) {
@@ -367,16 +375,34 @@ function RangerPicker<DateType>() {
                 setCurrentPreset(preset);
                 // 返回preset计算出的日期范围
                 return props.picker === 'time' && !props.order
-                  ? [startValue, endValue]
-                  : reorderValues([startValue, endValue], props.generateConfig);
+                  ? [startValue, endValue, preset]
+                  : reorderValues([startValue, endValue, preset], props.generateConfig);
               }
             }
           }
 
           // 处理普通格式的value
-          return props.picker === 'time' && !props.order
-            ? values
-            : reorderValues(values, props.generateConfig);
+          if (props.picker === 'time' && !props.order) {
+            return values;
+          }
+
+          // 如果values是字符串数组，需要转换为日期对象
+          if (Array.isArray(values)) {
+            const [startValue, endValue] = values;
+            // 检查是否是字符串，如果是则转换为日期对象
+            const startDate =
+              typeof startValue === 'string'
+                ? props.generateConfig.toDate(startValue, 'YYYY-MM-DDTHH:mm:ss.SSSZ')
+                : startValue;
+            const endDate =
+              typeof endValue === 'string'
+                ? props.generateConfig.toDate(endValue, 'YYYY-MM-DDTHH:mm:ss.SSSZ')
+                : endValue;
+
+            if (startDate && endDate) {
+              return reorderValues([startDate, endDate], props.generateConfig);
+            }
+          }
         },
       });
 
@@ -392,17 +418,17 @@ function RangerPicker<DateType>() {
           return;
         }
 
-        const matchedPreset = presetList.value.find(preset => {
-          if (!preset.value || !preset.value[0] || !preset.value[1]) {
-            return false;
+        // 如果value包含preset信息（第三个元素），直接使用该preset
+        if (values.length > 2 && values[2]) {
+          const presetFromValue = values[2] as any;
+          if (presetFromValue.key) {
+            const matchedPreset = presetList.value.find(
+              preset => preset.key === presetFromValue.key,
+            );
+            setCurrentPreset(matchedPreset || null);
+            return;
           }
-          return (
-            isEqual(props.generateConfig, values[0], preset.value[0]) &&
-            isEqual(props.generateConfig, values[1], preset.value[1])
-          );
-        });
-
-        setCurrentPreset(matchedPreset || null);
+        }
       };
 
       // =========================== View Date ===========================
@@ -583,8 +609,8 @@ function RangerPicker<DateType>() {
         fromPreset = false,
       ) {
         let values = newValue;
-        let startValue = getValue(values, 0);
-        let endValue = getValue(values, 1);
+        let startValue = getValue(values, 0) as DateType;
+        let endValue = getValue(values, 1) as DateType;
         const {
           generateConfig,
           locale,
@@ -614,11 +640,11 @@ function RangerPicker<DateType>() {
           ) {
             // Clean up end date when start date is after end date
             if (sourceIndex === 0) {
-              values = [startValue, null];
+              values = [startValue, null, values[2]];
               endValue = null;
             } else {
               startValue = null;
-              values = [null, endValue];
+              values = [null, endValue, values[2]];
             }
 
             // Clean up cache since invalidate
@@ -648,7 +674,7 @@ function RangerPicker<DateType>() {
             23,
           );
 
-          values = [startWithTime, endWithTime];
+          values = [startWithTime, endWithTime, values[2]];
         }
 
         // 如果通过preset触发，且preset有value属性，重新计算日期范围
@@ -676,7 +702,7 @@ function RangerPicker<DateType>() {
                 generateConfig.setMinute(generateConfig.setSecond(presetEndValue, 59), 59),
                 23,
               );
-              values = [startWithTime, endWithTime];
+              values = [startWithTime, endWithTime, values[2]];
             } else if (showTime) {
               // 如果未启用isWholeDay但启用了showTime，使用当前时间的时分秒
               const now = generateConfig.getNow();
@@ -698,10 +724,10 @@ function RangerPicker<DateType>() {
                 ),
                 currentHour,
               );
-              values = [startWithCurrentTime, endWithCurrentTime];
+              values = [startWithCurrentTime, endWithCurrentTime, values[2]];
             } else {
               // 如果没有启用showTime，保持preset的原始时间
-              values = [presetStartValue, presetEndValue];
+              values = [presetStartValue, presetEndValue, values[2]];
             }
           }
         }
@@ -804,12 +830,12 @@ function RangerPicker<DateType>() {
       };
 
       const [startValueTexts, firstStartValueText] = useValueTexts<DateType>(
-        computed(() => getValue(selectedValue.value, 0)),
+        computed(() => getValue(selectedValue.value, 0) as DateType),
         sharedTextHooksProps,
       );
 
       const [endValueTexts, firstEndValueText] = useValueTexts<DateType>(
-        computed(() => getValue(selectedValue.value, 1)),
+        computed(() => getValue(selectedValue.value, 1) as DateType),
         sharedTextHooksProps,
       );
 
@@ -1065,7 +1091,7 @@ function RangerPicker<DateType>() {
           const timeDefaultValues: DateType[] = showTime.defaultValue!;
           panelShowTime = {
             ...showTime,
-            defaultValue: getValue(timeDefaultValues, mergedActivePickerIndex.value) || undefined,
+            defaultValue: timeDefaultValues[mergedActivePickerIndex.value] || undefined,
           };
         }
 
@@ -1117,7 +1143,7 @@ function RangerPicker<DateType>() {
             value={{
               inRange: true,
               panelPosition,
-              rangedValue: rangeHoverValue.value || selectedValue.value,
+              rangedValue: (rangeHoverValue.value || selectedValue.value) as [DateType, DateType],
               hoverRangedValue: panelHoverRangedValue.value,
             }}
           >
@@ -1192,7 +1218,7 @@ function RangerPicker<DateType>() {
 
         // Handle autoFill: when double-clicking and autoFill is enabled, set the same date for both start and end
         if (props.autoFill && isDoubleClick && type === 'mouse') {
-          values = [date, date];
+          values = [date, date, values[2]];
         }
 
         if (type === 'submit' || (type !== 'key' && !needConfirmButton.value) || shouldSwitch) {
@@ -1212,8 +1238,8 @@ function RangerPicker<DateType>() {
           } else if (shouldSwitch) {
             // If double click, switch to next input
             // But check if both inputs are complete, if so don't switch to avoid animation before popup closes
-            const startValue = getValue(values, 0);
-            const endValue = getValue(values, 1);
+            const startValue = getValue(values, 0) as DateType;
+            const endValue = getValue(values, 1) as DateType;
             const bothValuesComplete = startValue && endValue;
 
             if (!bothValuesComplete) {
@@ -1554,7 +1580,7 @@ function RangerPicker<DateType>() {
                   triggerStartTextChange(e.target.value);
                 }}
                 autofocus={autofocus}
-                placeholder={getValue(placeholder, 0) || ''}
+                placeholder={(getValue(placeholder, 0) as string) || ''}
                 ref={startInputRef}
                 {...startInputProps.value}
                 {...inputSharedProps}
@@ -1580,7 +1606,7 @@ function RangerPicker<DateType>() {
                 onInput={(e: ChangeEvent) => {
                   triggerEndTextChange(e.target.value);
                 }}
-                placeholder={getValue(placeholder, 1) || ''}
+                placeholder={(getValue(placeholder, 1) as string) || ''}
                 ref={endInputRef}
                 {...endInputProps.value}
                 {...inputSharedProps}

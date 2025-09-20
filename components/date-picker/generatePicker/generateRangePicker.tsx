@@ -85,13 +85,17 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
         },
       });
       const maybeToStrings = (dates: RangeValue<DateType>) => {
-        return props.valueFormat ? generateConfig.toString(dates, props.valueFormat) : dates;
+        return props.valueFormat ? generateConfig.toString(dates as any, props.valueFormat) : dates;
       };
       const onChange: RangePickerOnChange<DateType> = (values, formatStrings) => {
         const [startValue, endValue, currentPreset] = values;
         const [startStr, endStr] = formatStrings;
-        const dates: RangeValue<DateType> = [startValue, endValue];
-        const dateStrings: [string, string] = [startStr, endStr];
+        const dates: RangeValue<DateType> = [startValue, endValue, currentPreset];
+        const dateStrings: [string, string, string | null] = [
+          startStr,
+          endStr,
+          currentPreset?.key || null,
+        ];
 
         const processedValues = maybeToStrings(dates);
         emit('update:value', processedValues);
@@ -130,7 +134,7 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
       const value = computed(() => {
         if (props.value) {
           return props.valueFormat
-            ? generateConfig.toDate(props.value, props.valueFormat)
+            ? generateConfig.toDate(props.value as any, props.valueFormat)
             : props.value;
         }
         return props.value;
@@ -138,7 +142,7 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
       const defaultValue = computed(() => {
         if (props.defaultValue) {
           return props.valueFormat
-            ? generateConfig.toDate(props.defaultValue, props.valueFormat)
+            ? generateConfig.toDate(props.defaultValue as any, props.valueFormat)
             : props.defaultValue;
         }
         return props.defaultValue;
@@ -146,7 +150,7 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
       const defaultPickerValue = computed(() => {
         if (props.defaultPickerValue) {
           return props.valueFormat
-            ? generateConfig.toDate(props.defaultPickerValue, props.valueFormat)
+            ? generateConfig.toDate(props.defaultPickerValue as any, props.valueFormat)
             : props.defaultPickerValue;
         }
         return props.defaultPickerValue;
