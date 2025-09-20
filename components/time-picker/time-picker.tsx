@@ -70,7 +70,7 @@ function createTimePicker<
   DateType,
   DTimePickerProps extends TimePickerProps<DateType> = TimePickerProps<DateType>,
   DTimeRangePickerProps extends TimeRangePickerProps<DateType> = TimeRangePickerProps<DateType>,
->(generateConfig: GenerateConfig<DateType>) {
+>(generateConfig: GenerateConfig<DateType>): any {
   const DatePicker = generatePicker<DateType>(generateConfig, {
     ...timePickerProps(),
     order: { type: Boolean, default: true },
