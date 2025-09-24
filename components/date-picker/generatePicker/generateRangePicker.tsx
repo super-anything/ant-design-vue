@@ -133,12 +133,25 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
 
       const value = computed(() => {
         if (props.value) {
+          const [, , preset] = (props.value || []) as any[];
+          const presetKey = preset?.key;
+          if (presetKey && props.presets) {
+            const matchingPreset = (props.presets as any[]).find(p => p.key === presetKey);
+            if (matchingPreset) {
+              const presetValue =
+                typeof matchingPreset.value === 'function'
+                  ? matchingPreset.value()
+                  : matchingPreset.value;
+              return [...presetValue, matchingPreset];
+            }
+          }
           return props.valueFormat
             ? generateConfig.toDate(props.value as any, props.valueFormat)
             : props.value;
         }
         return props.value;
       });
+
       const defaultValue = computed(() => {
         if (props.defaultValue) {
           return props.valueFormat
@@ -147,6 +160,7 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
         }
         return props.defaultValue;
       });
+
       const defaultPickerValue = computed(() => {
         if (props.defaultPickerValue) {
           return props.valueFormat
@@ -155,6 +169,7 @@ export default function generateRangePicker<DateType, ExtraProps = {}>(
         }
         return props.defaultPickerValue;
       });
+
       return () => {
         const locale = { ...contextLocale.value, ...props.locale };
         const p = { ...props, ...attrs };

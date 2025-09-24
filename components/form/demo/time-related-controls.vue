@@ -45,7 +45,11 @@ or use `valueFormat` to format.
       />
     </a-form-item>
     <a-form-item name="range-picker" label="RangePicker" v-bind="rangeConfig">
-      <a-range-picker v-model:value="formState['range-picker']" value-format="YYYY-MM-DD" />
+      <a-range-picker
+        v-model:value="formState['range-picker']"
+        value-format="YYYY-MM-DD"
+        :presets="rangePresets"
+      />
     </a-form-item>
     <a-form-item name="range-time-picker" label="RangePicker[showTime]" v-bind="rangeConfig">
       <a-range-picker
@@ -69,17 +73,22 @@ or use `valueFormat` to format.
       }"
     >
       <a-button type="primary" html-type="submit">Submit</a-button>
+      <a-button @click="setPresetValue" style="margin-left: 8px">
+        Set to "Last 7 Days" preset
+      </a-button>
     </a-form-item>
   </a-form>
 </template>
 <script lang="ts" setup>
 import { reactive } from 'vue';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 
 interface FormState {
   'date-picker': string;
   'date-time-picker': string;
   'month-picker': string;
-  'range-picker': [string, string];
+  'range-picker': any;
   'range-time-picker': [string, string];
   'time-picker': string;
 }
@@ -106,5 +115,23 @@ const onFinish = (values: any) => {
 
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo);
+};
+
+const rangePresets: { label: string; value: [Dayjs, Dayjs]; key: string }[] = [
+  { label: 'Last 7 Days', value: [dayjs().add(-7, 'd'), dayjs()], key: 'last-7-days' },
+  { label: 'Last 14 Days', value: [dayjs().add(-14, 'd'), dayjs()], key: 'last-14-days' },
+  { label: 'Last 30 Days', value: [dayjs().add(-30, 'd'), dayjs()], key: 'last-30-days' },
+  { label: 'Last 90 Days', value: [dayjs().add(-90, 'd'), dayjs()], key: 'last-90-days' },
+];
+
+const setPresetValue = () => {
+  // These dates should be ignored and recalculated based on the preset
+  const dummyStartDate = '2000-01-01';
+  const dummyEndDate = '2000-01-02';
+  formState['range-picker'] = [
+    dummyStartDate,
+    dummyEndDate,
+    rangePresets.find(p => p.key === 'last-7-days'),
+  ];
 };
 </script>
