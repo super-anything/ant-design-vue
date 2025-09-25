@@ -55,8 +55,9 @@ or use `valueFormat` to format.
       <a-range-picker
         v-model:value="formState['range-time-picker']"
         show-time
+        :auto-fill="true"
+        :is-whole-day="true"
         format="YYYY-MM-DD HH:mm:ss"
-        value-format="YYYY-MM-DD HH:mm:ss"
       />
     </a-form-item>
     <a-form-item name="time-picker" label="TimePicker" v-bind="config">
@@ -108,7 +109,7 @@ const config = {
 const rangeConfig = {
   rules: [{ type: 'array' as const, required: true, message: 'Please select time!' }],
 };
-const formState = reactive({} as FormState);
+const formState = reactive({ 'range-picker': ['2023-01-01', '2023-01-31'] } as FormState);
 const onFinish = (values: any) => {
   console.log('Success:', values, formState);
 };

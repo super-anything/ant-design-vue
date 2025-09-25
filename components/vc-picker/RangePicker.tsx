@@ -392,11 +392,17 @@ function RangerPicker<DateType>() {
             // 检查是否是字符串，如果是则转换为日期对象
             const startDate =
               typeof startValue === 'string'
-                ? props.generateConfig.toDate(startValue, 'YYYY-MM-DDTHH:mm:ss.SSSZ')
+                ? props.generateConfig.toDate(
+                    startValue,
+                    props.showTime ? 'YYYY-MM-DD' : 'YYYY-MM-DDTHH:mm:ss.SSSZ',
+                  )
                 : startValue;
             const endDate =
               typeof endValue === 'string'
-                ? props.generateConfig.toDate(endValue, 'YYYY-MM-DDTHH:mm:ss.SSSZ')
+                ? props.generateConfig.toDate(
+                    endValue,
+                    props.showTime ? 'YYYY-MM-DD' : 'YYYY-MM-DDTHH:mm:ss.SSSZ',
+                  )
                 : endValue;
 
             if (startDate && endDate) {
@@ -655,26 +661,6 @@ function RangerPicker<DateType>() {
             // Reorder when in same date
             values = reorderValues(values, generateConfig);
           }
-        }
-
-        // Handle isWholeDay: set time to 00:00:00 for start and 23:59:59 for end when showTime is true
-        if (props.isWholeDay && showTime && values && values[0] && values[1]) {
-          const startDate = values[0];
-          const endDate = values[1];
-
-          // Set start time to 00:00:00
-          const startWithTime = generateConfig.setHour(
-            generateConfig.setMinute(generateConfig.setSecond(startDate, 0), 0),
-            0,
-          );
-
-          // Set end time to 23:59:59
-          const endWithTime = generateConfig.setHour(
-            generateConfig.setMinute(generateConfig.setSecond(endDate, 59), 59),
-            23,
-          );
-
-          values = [startWithTime, endWithTime, values[2]];
         }
 
         // 如果通过preset触发，且preset有value属性，重新计算日期范围
@@ -1218,7 +1204,21 @@ function RangerPicker<DateType>() {
 
         // Handle autoFill: when double-clicking and autoFill is enabled, set the same date for both start and end
         if (props.autoFill && isDoubleClick && type === 'mouse') {
-          values = [date, date, values[2]];
+          let newStartDate = date;
+          let newEndDate = date;
+
+          // 如果启用了isWholeDay，则设置时分秒
+          if (props.isWholeDay && props.showTime) {
+            newStartDate = props.generateConfig.setHour(
+              props.generateConfig.setMinute(props.generateConfig.setSecond(newStartDate, 0), 0),
+              0,
+            );
+            newEndDate = props.generateConfig.setHour(
+              props.generateConfig.setMinute(props.generateConfig.setSecond(newEndDate, 59), 59),
+              23,
+            );
+          }
+          values = [newStartDate, newEndDate, values[2]];
         }
 
         if (type === 'submit' || (type !== 'key' && !needConfirmButton.value) || shouldSwitch) {
