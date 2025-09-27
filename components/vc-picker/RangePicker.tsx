@@ -317,6 +317,11 @@ function RangerPicker<DateType>() {
       });
 
       // ============================= Value =============================
+      // ========================= Current Preset =========================
+      const [currentPreset, setCurrentPreset] = useState<PresetDate<RangeValue<DateType>> | null>(
+        null,
+      );
+
       const [mergedValue, setInnerValue] = useMergedState<RangeValue<DateType>>(null, {
         value: toRef(props, 'value'),
         defaultValue: props.defaultValue,
@@ -411,11 +416,6 @@ function RangerPicker<DateType>() {
           }
         },
       });
-
-      // ========================= Current Preset =========================
-      const [currentPreset, setCurrentPreset] = useState<PresetDate<RangeValue<DateType>> | null>(
-        null,
-      );
 
       // 检查当前值是否匹配某个 preset
       const checkAndSetPreset = (values: RangeValue<DateType>) => {
